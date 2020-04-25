@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CRUD (Vue.js, PHP & MySQLi</title>
+    <!-- Memanggil Boostrap -->
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+      integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+      crossorigin="anonymous"
+    />
+    <!-- Memanggil Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.8.1/css/all.css"
+      integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf"
+      crossorigin="anonymous"
+    />
+    <style>
+      #overlay {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.6);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="app">
+      <div class="container-fluid">
+        <div class="row bg-dark">
+          <div class="col-lg-12">
+            <p
+              class="text-center text-light display-4 pt-2"
+              style="font-size: 25px;"
+            >
+              CRUD ( Vue.js, PHP & MySQLi )
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="container">
+        <div class="row mt-3">
+          <div class="col-lg-6">
+            <h3 class="text-info">Registered Users</h3>
+          </div>
+          <div class="col-lg-6">
+            <button class="btn btn-info float-right" @click="showAddModal=true">
+              <i class="fas fa-user"></i>&nbsp;&nbsp;Add New User
+            </button>
+          </div>
+        </div>
+        <hr class="bg-info" />
+        <div class="row">
+          <div class="alert alert-danger col-6 ml-3" v-if="errorMsg">
+            {{ errorMsg }}
+          </div>
+          <div class="alert alert-success col-6 ml-3" v-if="successMsg">
+            {{ successMsg }}
+          </div>
+        </div>
+        <!-- Displaying Record -->
+        <div class="row">
+          <div class="col-lg-12">
+            <table class="table table-bordered table-striped">
+              <thead>
+                <tr class="text-center bg-info text-light">
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Edit</th>
+                  <th>Delete</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="text-center" v-for="user in users">
+                  <td>{{ user.id }}</td>
+                  <td>{{ user.name }}</td>
+                  <td>{{ user.email }}</td>
+                  <td>{{ user.phone }}</td>
+                  <td>
+                    <a
+                      href="#"
+                      class="text-success"
+                      @click="showEditModal=true; selectUser(user);"
+                      ><i class="fas fa-edit"></i
+                    ></a>
+                  </td>
+                  <td>
+                    <a
+                      href="#"
+                      class="text-danger"
+                      @click="showDeleteModal=true; selectUser(user)"
+                      ><i class="fas fa-trash-alt"></i
+                    ></a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Tambah (awal) -->
+      <div id="overlay" v-if="showAddModal">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Add New User</h5>
+              <button type="button" class="close" @click="showAddModal=false">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body p-4">
+              <form action="#" method="post">
+                <div class="form-group">
+                  <input
+                    type="text"
+                    name="name"
+                    class="form-control form-control-lg"
+                    placeholder="Input name.."
+                    v-model="newUser.name"
+                  />
+                </div>
+                <div class="form-group">
+                  <input
+                    type="email"
+                    name="email"
+                    class="form-control form-control-lg"
+                    placeholder="Input email.."
+                    v-model="newUser.email"
+                  />
+                </div>
+                <div class="form-group">
+                  <input
+                    type="tel"
+                    name="phone"
+                    class="form-control form-control-lg"
+                    placeholder="Input phone.."
+                    v-model="newUser.phone"
+                  />
+                </div>
+                <div class="form-group">
+                  <button
+                    class="btn btn-primary btn-block btn-lg"
+                    @click="showAddModal=false; addUser(); clearMsg()"
+                  >
+                    Add User
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Modal Tambah (akhir)-->
+
+      <!-- Modal Edit (awal) -->
+      <div id="overlay" v-if="showEditModal">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Update User</h5>
+              <button type="button" class="close" @click="showEditModal=false">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body p-4">
+              <form action="#" method="post">
+                <div class="form-group">
+                  <input
+                    type="text"
+                    name="name"
+                    class="form-control form-control-lg"
+                    v-model="currentUser.name"
+                  />
+                </div>
+                <div class="form-group">
+                  <input
+                    type="email"
+                    name="email"
+                    class="form-control form-control-lg"
+                    v-model="currentUser.email"
+                  />
+                </div>
+                <div class="form-group">
+                  <input
+                    type="tel"
+                    name="phone"
+                    class="form-control form-control-lg"
+                    v-model="currentUser.phone"
+                  />
+                </div>
+                <div class="form-group">
+                  <button
+                    class="btn btn-primary btn-block btn-lg"
+                    @click="showEditModal=false; updateUser(); clearMsg()"
+                  >
+                    Update User
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Modal Edit (akhir)-->
+
+      <!-- Modal Delete (awal) -->
+      <div id="overlay" v-if="showDeleteModal">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Delete User</h5>
+              <button
+                type="button"
+                class="close"
+                @click="showDeleteModal=false"
+              >
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body p-4">
+              <h4 class="text-a">Apakah Anda yakin menghapus data user ?</h4>
+              <h5>
+                Anda Hapus data <b><i>{{ currentUser.name }}</i></b>
+              </h5>
+              <hr />
+              <button
+                class="btn btn-danger btn-lg"
+                @click="showDeleteModal=false; deleteUser(); clearMsg();"
+              >
+                Yes
+              </button>
+              &nbsp;&nbsp;&nbsp;&nbsp;
+              <button
+                class="btn btn-success btn-lg"
+                @click="showDeleteModal=false"
+              >
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Modal Delete (akhir)-->
+    </div>
+
+    <!-- Memangil Axios -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+    <!-- Memanggil Vue js -->
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+
+    <!-- Memanggil File JavaScript buatan sendiri -->
+    <script>
+      var app = new Vue({
+        el: "#app",
+        data: {
+          errorMsg: "",
+          successMsg: "",
+          showAddModal: false,
+          showEditModal: false,
+          showDeleteModal: false,
+          users: [],
+          newUser: {
+            name: "",
+            email: "",
+            phone: "",
+          },
+          currentUser: {},
+        },
+        mounted: function () {
+          this.getAllUsers();
+        },
+        methods: {
+          // Menampilkan data
+          getAllUsers() {
+            axios
+              .get("http://localhost/vue-js-crud/process.php?action=read")
+              .then(function (response) {
+                if (response.data.error) {
+                  app.errorMsg = response.data.message;
+                } else {
+                  app.users = response.data.users;
+                }
+              });
+          },
+          // Tambah data
+          addUser() {
+            var formData = app.toFormData(app.newUser);
+
+            axios
+              .post(
+                "http://localhost/vue-js-crud/process.php?action=create",
+                formData
+              )
+              .then(function (response) {
+                app.newUser = {
+                  name: "",
+                  email: "",
+                  phone: "",
+                };
+
+                if (response.data.error) {
+                  app.errorMsg = response.data.message;
+                } else {
+                  app.successMsg = response.data.message;
+                  app.getAllUsers();
+                }
+              });
+          },
+          // Ubah data
+          updateUser() {
+            var formData = app.toFormData(app.currentUser);
+
+            axios
+              .post(
+                "http://localhost/vue-js-crud/process.php?action=update",
+                formData
+              )
+              .then(function (response) {
+                app.currentUser = {};
+
+                if (response.data.error) {
+                  app.errorMsg = response.data.message;
+                } else {
+                  app.successMsg = response.data.message;
+                  app.getAllUsers();
+                }
+              });
+          },
+
+          // Hapus data
+          deleteUser() {
+            var formData = app.toFormData(app.currentUser);
+
+            axios
+              .post(
+                "http://localhost/vue-js-crud/process.php?action=delete",
+                formData
+              )
+              .then(function (response) {
+                app.currentUser = {};
+
+                if (response.data.error) {
+                  app.errorMsg = response.data.message;
+                } else {
+                  app.successMsg = response.data.message;
+                  app.getAllUsers();
+                }
+              });
+          },
+
+          // tambah
+          toFormData(obj) {
+            var fd = new FormData();
+            for (var i in obj) {
+              fd.append(i, obj[i]);
+            }
+            return fd;
+          },
+          //  ubah dan hapus (mencari user berdasarkan ID )
+          selectUser(user) {
+            app.currentUser = user;
+          },
+          // Menghilangkan Alert
+          clearMsg() {
+            app.errorMsg = "";
+            app.successMsg = "";
+          },
+        },
+      });
+    </script>
+  </body>
+</html>
